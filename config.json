@@ -1,0 +1,22 @@
+{
+  "name": "Extract frames from videos",
+  "type": "app",
+  "categories": [
+    "videos"
+  ],
+  "description": "Read every n-th frame and save to images project",
+  "docker_image": "supervisely/base-py:6",
+  "main_script": "src/main.py",
+  "modal_template": "src/modal.html",
+  "modal_template_state": {
+    "projectName": "my-videos"
+  },
+  "task_location": "workspace_tasks",
+  "isolate": true,
+  "headless": true,
+  "icon": "https://img.icons8.com/color/96/000000/video-trimming.png",
+  "icon_background": "#FFFFFF",
+  "context_menu": {
+    "target": ["videos_project", "videos_dataset"]
+  }
+}
