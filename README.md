@@ -41,7 +41,7 @@ Images will have name in the following structure: `{original video id}_frame_{fr
 
 **Step 2:** Run app from context menu of video project or dataset: 
 
-<img src="https://i.imgur.com/M9Mt3Wr.png"/>
+<img src="https://i.imgur.com/M9Mt3Wr.png" width="450px"/>
 
 **Step 3:** Define settings
 
