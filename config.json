@@ -14,7 +14,7 @@
   "task_location": "workspace_tasks",
   "isolate": true,
   "headless": true,
-  "icon": "https://img.icons8.com/color/96/000000/video-trimming.png",
+  "icon": "https://i.imgur.com/aINxyST.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
     "target": ["videos_project", "videos_dataset"]
