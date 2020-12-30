@@ -22,7 +22,7 @@
 
 App allows to extract video frames to images project without labels. User should define **frames step**, and **datasets structure** (keep original structure or save frames for every video to separate dataset) and **result project name**. 
 
-Images will have name in the following structure: `{original video id}_frame_{frame-index}.jpg`. Also additional meta information is attached to every frame and available in image labeling tool. For example: 
+Images will have name in the following structure: `{original video id}_frame_{frame index}.jpg`. Also additional meta information is attached to every frame and available in image labeling tool. For example: 
 ```json
 {
     "original_project_id": 333,
