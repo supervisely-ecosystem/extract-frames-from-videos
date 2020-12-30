@@ -1,68 +1,72 @@
 import os
-import requests
 import supervisely_lib as sly
 
 TEAM_ID = int(os.environ['modal.state.teamId'])
 WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
-
 PROJECT_ID = int(os.environ["modal.state.slyProjectId"])
-DATASET_ID = os.environ.get("modal.state.slyDatasetId")
+DATASET_ID = os.environ.get("modal.state.slyDatasetId", None)
+if DATASET_ID is not None:
+    DATASET_ID = int(DATASET_ID)
+FRAMES_STEP = int(os.environ["modal.state.framesStep"])
+DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
+RESULT_PROJECT_NAME = os.environ["modal.state.resultProjectName"]
 
-INPUT_FILE = os.environ.get("modal.state.slyFile")
-PROJECT_NAME = os.environ['modal.state.projectName']
-DATASET_NAME = os.environ['modal.state.datasetName']
-
-my_app = sly.AppService(ignore_task_id=True)
-
-
-def download_file(url, local_path, logger, cur_video_index, total_videos_count):
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        total_size_in_bytes = int(r.headers.get('content-length', 0))
-        progress = sly.Progress("Downloading [{}/{}] {!r}".format(cur_video_index,
-                                                                  total_videos_count,
-                                                                  sly.fs.get_file_name_with_ext(local_path)),
-                                total_size_in_bytes, ext_logger=logger, is_size=True)
-        with open(local_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-                progress.iters_done_report(len(chunk))
-    return local_path
+my_app = sly.AppService()
 
 
-@my_app.callback("import_videos")
+@my_app.callback("extract_frames")
 @sly.timeit
-def import_videos(api: sly.Api, task_id, context, state, app_logger):
-    local_file = os.path.join(my_app.data_dir, sly.fs.get_file_name_with_ext(INPUT_FILE))
-    api.file.download(TEAM_ID, INPUT_FILE, local_file)
+def extract_frames(api: sly.Api, task_id, context, state, app_logger):
+    project = api.project.get_info_by_id(PROJECT_ID)
+    if DATASET_ID is None:
+        datasets = api.dataset.get_list(project.id)
+    else:
+        datasets = [api.dataset.get_info_by_id(DATASET_ID)]
 
-    with open(local_file) as f:
-        video_urls = f.readlines()
-    # you may also want to remove whitespace characters like `\n` at the end of each line
-    video_urls = [x.strip() for x in video_urls]
+    res_project = api.project.create(WORKSPACE_ID,
+                                     RESULT_PROJECT_NAME,
+                                     type=sly.ProjectType.IMAGES,
+                                     description=project.description,
+                                     change_name_if_conflict=True)
 
-    project = api.project.get_info_by_name(WORKSPACE_ID, PROJECT_NAME)
-    if project is None:
-        project = api.project.create(WORKSPACE_ID, PROJECT_NAME, type=sly.ProjectType.VIDEOS)
+    for dataset in datasets:
+        res_dataset = None
+        if DATASETS_STRUCTURE == "keep original":
+            res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
+        videos_info = api.video.get_list(dataset.id)
+        for info in videos_info:
+            if DATASETS_STRUCTURE == "create dataset for every video":
+                res_dataset = api.dataset.create(res_project.id, info.name)
 
-    dataset = api.dataset.get_info_by_name(project.id, DATASET_NAME)
-    if dataset is None:
-        dataset = api.dataset.create(project.id, DATASET_NAME)
+            shared_meta = {
+                "original_project_id": project.id,
+                "original_project_name": project.name,
+                "original_dataset_id": dataset.id,
+                "original_dataset_name": dataset.name,
+            }
+            frames_dir = os.path.join(my_app.data_dir, "frames")
+            sly.fs.mkdir(frames_dir)
+            metas = []
+            paths = []
+            names = []
+            progress = sly.Progress(info.name, int(info.frames_count/FRAMES_STEP) + 1)
+            for frame_index in range(0, info.frames_count, FRAMES_STEP):
+                image_name = "{}_frame_{:06d}.jpg".format(info.id, frame_index)
+                image_path = os.path.join(frames_dir, image_name)
+                api.video.frame.download_path(info.id, frame_index, image_path)
+                metas.append({
+                    **shared_meta,
+                    "original_video_id": info.id,
+                    "original_video_name": info.name,
+                    "frame": frame_index
+                })
+                paths.append(image_path)
+                names.append(image_name)
+                progress.iter_done_report()
+            api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
+            sly.fs.clean_dir(frames_dir)
 
-    for idx, video_url in enumerate(video_urls):
-        try:
-            app_logger.info("Processing [{}/{}]: {!r}".format(idx, len(video_urls), video_url))
-            video_name = sly.fs.get_file_name_with_ext(video_url)
-            local_video_path = os.path.join(my_app.data_dir, video_name)
-            download_file(video_url, local_video_path, app_logger, idx + 1, len(video_urls))
-            item_name = api.video.get_free_name(dataset.id, video_name)  # checks if item with the same name exists in dataset
-            api.video.upload_paths(dataset.id, [item_name], [local_video_path])
-        except Exception as e:
-            app_logger.warn(f"Error during import {video_url}: {repr(e)}")
-        finally:
-            sly.fs.silent_remove(local_video_path)
-
-    api.task.set_output_project(task_id, project.id, project.name)
+    api.task.set_output_project(task_id, res_project.id, res_project.name)
     my_app.stop()
 
 
@@ -70,10 +74,10 @@ def main():
     sly.logger.info("Script arguments", extra={
         "TEAM_ID": TEAM_ID,
         "WORKSPACE_ID": WORKSPACE_ID,
-        "INPUT_FILE": INPUT_FILE,
-        "PROJECT_NAME": PROJECT_NAME,
+        "PROJECT_ID": PROJECT_ID,
+        "DATASET_ID": DATASET_ID
     })
-    my_app.run(initial_events=[{"command": "import_videos"}])
+    my_app.run(initial_events=[{"command": "extract_frames"}])
 
 
 if __name__ == "__main__":

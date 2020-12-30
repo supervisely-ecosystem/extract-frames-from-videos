@@ -1,17 +1,31 @@
 <div>
-    <sly-field title="Upload To" description="Select destination project and dataset,
-                                              new project is created if it does not exist">
+
+    <sly-field title="Datasets structure" description="Keep original datasets or create dataset for every video">
+        <sly-icon slot="icon" :options="{ color: '#ff7c49', bgColor: '#fff39b', rounded: false }">
+            <i class="zmdi zmdi-view-list-alt"></i>
+        </sly-icon>
+        <el-select v-model="state.datasetsStructure">
+            <el-option key="keep original" value="keep original"/>
+            <el-option key="create dataset for every video" value="create dataset for every video"/>
+        </el-select>
+    </sly-field>
+
+    <sly-field title="Extract every N-th frame" description="Define frames step">
+        <sly-icon slot="icon" :options="{ color: '#4977ff', bgColor: '#ddf2ff', rounded: false }">
+            <i class="zmdi zmdi-fast-forward"></i>
+        </sly-icon>
+        <el-input-number v-model="state.framesStep" :min="1" :max="10"></el-input-number>
+    </sly-field>
+    <sly-field title="Result project" description="Define the name of result project">
         <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
-            <i class="zmdi zmdi-collection-video"></i>
+            <i class="zmdi zmdi-collection-folder-image"></i>
         </sly-icon>
         <sly-select-team-workspace
-            :team-id.sync="state.teamId"
-            :workspace-id.sync="state.workspaceId"
-            :disabled="true"
+                :team-id.sync="state.teamId"
+                :workspace-id.sync="state.workspaceId"
+                :disabled="true"
         />
         <div class="fflex mt10">Project name:</div>
         <el-input class="mt5" v-model="state.projectName"></el-input>
-        <div class="fflex mt10">Dataset name:</div>
-        <el-input class="mt5" v-model="state.datasetName"></el-input>
     </sly-field>
 </div>

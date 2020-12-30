@@ -9,7 +9,9 @@
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
-    "projectName": "my-videos"
+    "datasetsStructure": "keep original",
+    "framesStep": 10,
+    "projectName": "extracted-frames"
   },
   "task_location": "workspace_tasks",
   "isolate": true,
