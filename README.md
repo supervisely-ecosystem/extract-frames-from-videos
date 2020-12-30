@@ -41,19 +41,12 @@ Images will have name in the following structure: `{original video id}_frame_{fr
 
 **Step 2:** Run app from context menu of video project or dataset: 
 
-<img src="https://i.imgur.com/dmXj7K3.png"/>
+<img src="https://i.imgur.com/M9Mt3Wr.png"/>
 
-**Step 3:** Define input arguments in modal window: `video id`, `line width`, `opacity` for bitmap objects, `frame range`, etc.. and press `Run` button
+**Step 3:** Define settings
 
-<img src="https://i.imgur.com/7Zx57yP.png" width="450px"/>
+<img src="https://i.imgur.com/UX1FnI9.png" width="450px"/>
 
-**Step 4:** Wait until task is finished. Result video is saved to `Team Files` to directory: `/rendered_videos/` with name `<video-id>_<video-name>.mp4`. 
+**Step 4:** Wait until task is finished. Result project is created in the same workspace.
 
-File can be download directly from team files (right click on the file -> `Download`) 
-
-<img src="https://i.imgur.com/NwZ3AMK.png"/>
-
-or from workspace tasks list by clicking on the download URL in task output column
-
-<img src="https://i.imgur.com/VJwrmpH.png"/>
-
+<img src="https://i.imgur.com/bY2UAcn.png"/>
