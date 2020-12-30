@@ -63,7 +63,16 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 paths.append(image_path)
                 names.append(image_name)
                 progress.iter_done_report()
+                if len(names) == 10:
+                    api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
+                    progress.iters_done_report(len(names))
+                    metas = []
+                    paths = []
+                    names = []
+                    sly.fs.clean_dir(frames_dir)
+
             api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
+            progress.iters_done_report(len(names))
             sly.fs.clean_dir(frames_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
