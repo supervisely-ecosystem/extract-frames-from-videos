@@ -9,7 +9,7 @@ if DATASET_ID is not None:
     DATASET_ID = int(DATASET_ID)
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
 DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
-RESULT_PROJECT_NAME = os.environ["modal.state.resultProjectName"]
+RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
 
 my_app = sly.AppService()
 
