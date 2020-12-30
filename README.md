@@ -50,3 +50,8 @@ Images will have name in the following structure: `{original video id}_frame_{fr
 **Step 4:** Wait until task is finished. Result project is created in the same workspace.
 
 <img src="https://i.imgur.com/bY2UAcn.png"/>
+
+Every extracted frame has metainformation about original video:
+
+<img src="https://i.imgur.com/hBeWlbA.png"/>
+
