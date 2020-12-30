@@ -49,7 +49,8 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             metas = []
             paths = []
             names = []
-            progress = sly.Progress(info.name, int(info.frames_count/FRAMES_STEP) + 1)
+            cnt_extracted_frames = int(info.frames_count/FRAMES_STEP) + 1
+            progress = sly.Progress(info.name, cnt_extracted_frames)
             for frame_index in range(0, info.frames_count, FRAMES_STEP):
                 image_name = "{}_frame_{:06d}.jpg".format(info.id, frame_index)
                 image_path = os.path.join(frames_dir, image_name)
@@ -62,7 +63,6 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 })
                 paths.append(image_path)
                 names.append(image_name)
-                progress.iter_done_report()
                 if len(names) == 10:
                     api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
                     progress.iters_done_report(len(names))
@@ -70,7 +70,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                     paths = []
                     names = []
                     sly.fs.clean_dir(frames_dir)
-                    app_logger.info(f"Processing: {frame_index}/{info.frames_count}")
+                    app_logger.info(f"Processing: {progress.current}/{cnt_extracted_frames}")
 
             api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
             progress.iters_done_report(len(names))
