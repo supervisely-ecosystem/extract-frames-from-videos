@@ -36,7 +36,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
         videos_info = api.video.get_list(dataset.id)
         for info in videos_info:
             if DATASETS_STRUCTURE == "create dataset for every video":
-                res_dataset = api.dataset.create(res_project.id, info.name)
+                res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
 
             shared_meta = {
                 "original_project_id": project.id,
