@@ -19,6 +19,10 @@
   "icon": "https://i.imgur.com/aINxyST.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
-    "target": ["videos_project", "videos_dataset"]
-  }
+    "target": [
+      "videos_project",
+      "videos_dataset"
+    ]
+  },
+  "poster": "https://i.imgur.com/u2YnSZv.png"
 }
