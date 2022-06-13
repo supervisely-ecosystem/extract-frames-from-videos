@@ -2,7 +2,9 @@
   "name": "Extract frames from videos",
   "type": "app",
   "categories": [
-    "videos"
+    "images",
+    "videos",
+    "modalities"
   ],
   "description": "Read every n-th frame and save to images project",
   "docker_image": "supervisely/base-py:6",
