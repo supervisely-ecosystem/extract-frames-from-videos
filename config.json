@@ -5,7 +5,7 @@
     "images",
     "videos",
     "modalities",
-    "data-operations"
+    "data operations"
   ],
   "description": "Read every n-th frame and save to images project",
   "docker_image": "supervisely/base-py:6",
