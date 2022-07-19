@@ -1,8 +1,8 @@
 import os
 import supervisely_lib as sly
 
-TEAM_ID = int(os.environ['modal.state.teamId'])
-WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
+TEAM_ID = int(os.environ['context.teamId'])
+WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ["modal.state.slyProjectId"])
 DATASET_ID = os.environ.get("modal.state.slyDatasetId", None)
 if DATASET_ID is not None:
