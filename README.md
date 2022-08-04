@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/u2YnSZv.png"/>
+<img src="https://user-images.githubusercontent.com/48245050/182394924-5cacdc8d-25cf-41db-a98a-24b6adcbfbd0.png"/>
 
 # Extract Frames from Videos
 
