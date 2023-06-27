@@ -40,17 +40,17 @@ Images will have name in the following structure: `{original video id}_frame_{fr
 
 **Step 2:** Run app from context menu of video project or dataset: 
 
-<img src="https://i.imgur.com/M9Mt3Wr.png" width="450px"/>
+<img src="media/htr2.png" width="450px"/>
 
 **Step 3:** Define settings
 
-<img src="https://i.imgur.com/UX1FnI9.png" width="450px"/>
+<img src="media/htr3.png" width="450px"/>
 
 **Step 4:** Wait until task is finished. Result project is created in the same workspace.
 
-<img src="https://i.imgur.com/bY2UAcn.png"/>
+<img src="media/htr4.png"/>
 
 Every extracted frame has metainformation about original video:
 
-<img src="https://i.imgur.com/hBeWlbA.png"/>
+<img src="media/htr4a.png"/>
 
