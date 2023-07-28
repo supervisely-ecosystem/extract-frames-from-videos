@@ -1,31 +1,31 @@
 {
-  "name": "Extract frames from videos",
-  "type": "app",
-  "categories": [
-    "images",
-    "videos",
-    "modalities",
-    "data operations"
-  ],
-  "description": "Read every n-th frame and save to images project",
-  "docker_image": "supervisely/base-py-sdk:6.72.55",
-  "main_script": "src/main.py",
-  "modal_template": "src/modal.html",
-  "modal_template_state": {
-    "datasetsStructure": "keep original",
-    "framesStep": 10,
-    "projectName": "extracted-frames"
-  },
-  "task_location": "workspace_tasks",
-  "isolate": true,
-  "headless": true,
-  "icon": "https://i.imgur.com/aINxyST.png",
-  "icon_background": "#FFFFFF",
-  "context_menu": {
-    "target": [
-      "videos_project",
-      "videos_dataset"
-    ]
-  },
-  "poster": "https://user-images.githubusercontent.com/48245050/182394924-5cacdc8d-25cf-41db-a98a-24b6adcbfbd0.png"
+    "name": "Extract frames from videos",
+    "type": "app",
+    "categories": [
+        "images",
+        "videos",
+        "modalities",
+        "data operations"
+    ],
+    "description": "Read every n-th frame and save to images project",
+    "docker_image": "supervisely/data-operations:0.0.3",
+    "main_script": "src/main.py",
+    "modal_template": "src/modal.html",
+    "modal_template_state": {
+        "datasetsStructure": "keep original",
+        "framesStep": 10,
+        "projectName": "extracted-frames"
+    },
+    "task_location": "workspace_tasks",
+    "isolate": true,
+    "headless": true,
+    "icon": "https://i.imgur.com/aINxyST.png",
+    "icon_background": "#FFFFFF",
+    "context_menu": {
+        "target": [
+            "videos_project",
+            "videos_dataset"
+        ]
+    },
+    "poster": "https://user-images.githubusercontent.com/48245050/182394924-5cacdc8d-25cf-41db-a98a-24b6adcbfbd0.png"
 }
