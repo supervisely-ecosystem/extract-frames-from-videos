@@ -44,6 +44,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 "original_dataset_id": dataset.id,
                 "original_dataset_name": dataset.name,
             }
+            shared_meta.update(info.custom_data)
             frames_dir = os.path.join(my_app.data_dir, "frames")
             sly.fs.mkdir(frames_dir)
             metas = []
