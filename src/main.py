@@ -1,5 +1,6 @@
 import os
 import supervisely_lib as sly
+import workflow as w
 
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
@@ -20,8 +21,10 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
     project = api.project.get_info_by_id(PROJECT_ID)
     if DATASET_ID is None:
         datasets = api.dataset.get_list(project.id)
+        w.workflow_input(api, project.id, "project")
     else:
         datasets = [api.dataset.get_info_by_id(DATASET_ID)]
+        w.workflow_input(api, DATASET_ID, "dataset")
 
     res_project = api.project.create(WORKSPACE_ID,
                                      RESULT_PROJECT_NAME,
@@ -77,6 +80,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             sly.fs.clean_dir(frames_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
+    w.workflow_output(api, res_project.id)
     my_app.stop()
 
 
