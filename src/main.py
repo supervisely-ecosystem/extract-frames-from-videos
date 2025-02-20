@@ -1,7 +1,6 @@
 import os
 import supervisely_lib as sly
 import workflow as w
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 if sly.is_development():
     from dotenv import load_dotenv
@@ -60,16 +59,16 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 "original_video_id": info.id,
                 "original_video_name": info.name,
             }
-            frames_dir = os.path.join(my_app.data_dir, "frames")
-            sly.fs.mkdir(frames_dir)
             cnt_extracted_frames = int(info.frames_count/FRAMES_STEP) + 1
             progress = sly.Progress(info.name, cnt_extracted_frames)
 
-            for batch in sly.batched(list(range(0, info.frames_count, FRAMES_STEP)), batch_size=50):
-                metas = [{**shared_meta, "frame": frame_index} for frame_index in batch]
-                names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index in batch]
+            for batch_indices in sly.batched(list(range(0, info.frames_count, FRAMES_STEP)), batch_size=10):
+                metas = [{**shared_meta, "frame": frame_index} for frame_index in batch_indices]
+                names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index in batch_indices]
+
                 app_logger.info(f"Downloading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
-                imgs = [img for sublist in (api.video.frame.download_nps(info.id, bi) for bi in sly.batched(batch, batch_size=10)) for img in sublist]
+                imgs = api.video.frame.download_nps(dataset.id, info.id, batch_indices)
+                
                 app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
                 api.image.upload_nps(res_dataset.id, names, imgs, progress.iters_done_report, metas)
 
