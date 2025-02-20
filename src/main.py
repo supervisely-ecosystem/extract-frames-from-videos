@@ -1,13 +1,24 @@
 import os
 import supervisely_lib as sly
 import workflow as w
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TEAM_ID = int(os.environ['context.teamId'])
-WORKSPACE_ID = int(os.environ['context.workspaceId'])
-PROJECT_ID = int(os.environ["modal.state.slyProjectId"])
-DATASET_ID = os.environ.get("modal.state.slyDatasetId", None)
-if DATASET_ID is not None:
-    DATASET_ID = int(DATASET_ID)
+if sly.is_development():
+    from dotenv import load_dotenv
+    load_dotenv("debug.env")
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
+    TEAM_ID = int(os.environ['modal.state.teamId'])
+    WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
+    PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
+    DATASET_ID = os.environ.get('modal.state.slyDatasetId', None)
+    if DATASET_ID is not None:
+        DATASET_ID = int(DATASET_ID)
+else:
+    TEAM_ID = sly.env.team_id()
+    WORKSPACE_ID = sly.env.workspace_id()
+    PROJECT_ID = sly.env.project_id()
+    DATASET_ID = sly.env.dataset_id(False)
+
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
 DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
 RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
@@ -49,35 +60,42 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             }
             frames_dir = os.path.join(my_app.data_dir, "frames")
             sly.fs.mkdir(frames_dir)
-            metas = []
-            paths = []
-            names = []
+            names, paths, metas = [], [], []
             cnt_extracted_frames = int(info.frames_count/FRAMES_STEP) + 1
             progress = sly.Progress(info.name, cnt_extracted_frames)
-            for frame_index in range(0, info.frames_count, FRAMES_STEP):
-                image_name = "{}_frame_{:06d}.jpg".format(info.id, frame_index)
-                image_path = os.path.join(frames_dir, image_name)
-                api.video.frame.download_path(info.id, frame_index, image_path)
-                metas.append({
-                    **shared_meta,
-                    "original_video_id": info.id,
-                    "original_video_name": info.name,
-                    "frame": frame_index
-                })
-                paths.append(image_path)
-                names.append(image_name)
-                if len(names) == 10:
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                for batch in sly.batched(list(range(0, info.frames_count, FRAMES_STEP)), batch_size=50):
+                    paths, names, metas = [], [], []
+                    futures = []
+                    for download_batch in sly.batched(batch, batch_size=10):
+                        frame_indexes, batch_paths = [], []
+                        for frame_index in download_batch:
+                            image_name = f"{info.id}_frame_{frame_index:06d}.jpg"
+                            frame_path = os.path.join(frames_dir, image_name)
+                            batch_paths.append(frame_path)
+                            names.append(image_name)
+                            paths.append(frame_path)
+                            frame_indexes.append(frame_index)
+                            metas.append({
+                                **shared_meta,
+                                "original_video_id": info.id,
+                                "original_video_name": info.name,
+                                "frame": frame_index
+                            })
+                        futures.append(
+                            executor.submit(
+                                api.video.frame.download_paths,
+                                info.id,
+                                frame_indexes,
+                                batch_paths
+                            )
+                        )
+                    for future in as_completed(futures):
+                        future.result()
                     api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
                     progress.iters_done_report(len(names))
-                    metas = []
-                    paths = []
-                    names = []
                     sly.fs.clean_dir(frames_dir)
-                    app_logger.info(f"Processing: {progress.current}/{cnt_extracted_frames}")
-
-            api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
-            progress.iters_done_report(len(names))
-            sly.fs.clean_dir(frames_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
     w.workflow_output(api, res_project.id)
