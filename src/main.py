@@ -1,6 +1,7 @@
 import os
 import supervisely_lib as sly
 import workflow as w
+import cv2
 
 if sly.is_development():
     from dotenv import load_dotenv
@@ -24,6 +25,19 @@ RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
 
 my_app = sly.AppService()
 
+def frame_batches_generator(video_path, frame_count, step, batch_size):
+    cap = cv2.VideoCapture(video_path)
+    batch = []
+    for frame_index in range(0, frame_count, step):
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        ret, frame = cap.read()
+        if not ret:
+            break
+        batch.append((frame_index, frame))
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+    cap.release()
 
 @my_app.callback("extract_frames")
 @sly.timeit
@@ -41,7 +55,8 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                                      type=sly.ProjectType.IMAGES,
                                      description=project.description,
                                      change_name_if_conflict=True)
-
+    temp_dir = "./sly_app_data/"
+    os.makedirs(temp_dir, exist_ok=True)
     for dataset in datasets:
         res_dataset = None
         if DATASETS_STRUCTURE == "keep original":
@@ -50,6 +65,9 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
         for info in videos_info:
             if DATASETS_STRUCTURE == "create dataset for every video":
                 res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
+
+            video_path = temp_dir + info.name
+            api.video.download_path(info.id, video_path)
 
             shared_meta = {
                 "original_project_id": project.id,
@@ -61,16 +79,16 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             }
             cnt_extracted_frames = int(info.frames_count/FRAMES_STEP) + 1
             progress = sly.Progress(info.name, cnt_extracted_frames)
+            for batch in frame_batches_generator(video_path, info.frames_count, FRAMES_STEP, 10):
+                indices = [frame_index for frame_index, _ in batch]
+                frames = [frame for _, frame in batch]
 
-            for batch_indices in sly.batched(list(range(0, info.frames_count, FRAMES_STEP)), batch_size=10):
-                metas = [{**shared_meta, "frame": frame_index} for frame_index in batch_indices]
-                names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index in batch_indices]
-
-                app_logger.info(f"Downloading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
-                imgs = api.video.frame.download_nps(info.id, batch_indices)
+                metas = [{**shared_meta, "frame": frame_index} for frame_index, _ in indices]
+                names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index, _ in indices]
 
                 app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
-                api.image.upload_nps(res_dataset.id, names, imgs, progress.iters_done_report, metas)
+                api.image.upload_nps(res_dataset.id, names, frames, progress.iters_done_report, metas)
+            sly.fs.clean_dir(temp_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
     w.workflow_output(api, res_project.id)
