@@ -83,8 +83,8 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 indices = [frame_index for frame_index, _ in batch]
                 frames = [frame for _, frame in batch]
 
-                metas = [{**shared_meta, "frame": frame_index} for frame_index, _ in indices]
-                names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index, _ in indices]
+                metas = [{**shared_meta, "frame": index} for index in indices]
+                names = [f"{info.id}_frame_{index:06d}.jpg" for index in indices]
 
                 app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
                 api.image.upload_nps(res_dataset.id, names, frames, progress.iters_done_report, metas)
