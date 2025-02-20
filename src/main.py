@@ -60,31 +60,24 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             }
             frames_dir = os.path.join(my_app.data_dir, "frames")
             sly.fs.mkdir(frames_dir)
-            names, paths, metas = [], [], []
             cnt_extracted_frames = int(info.frames_count/FRAMES_STEP) + 1
             progress = sly.Progress(info.name, cnt_extracted_frames)
 
             for batch in sly.batched(list(range(0, info.frames_count, FRAMES_STEP)), batch_size=50):
-                paths, names, metas = [], [], []
-                for download_batch in sly.batched(batch, batch_size=10):
-                    frame_indexes, batch_paths = [], []
-                    for frame_index in download_batch:
-                        image_name = f"{info.id}_frame_{frame_index:06d}.jpg"
-                        frame_path = os.path.join(frames_dir, image_name)
-                        batch_paths.append(frame_path)
-                        names.append(image_name)
-                        paths.append(frame_path)
-                        frame_indexes.append(frame_index)
+                imgs, names, metas = [], [], []
+                for frame_indexes in sly.batched(batch, batch_size=10):
+                    for frame_index in frame_indexes:
+                        names.append(f"{info.id}_frame_{frame_index:06d}.jpg")
                         metas.append({
                             **shared_meta,
                             "original_video_id": info.id,
                             "original_video_name": info.name,
                             "frame": frame_index
                         })
-                    api.video.frame.download_paths(info.id, frame_indexes, batch_paths)
-                api.image.upload_paths(res_dataset.id, names, paths, metas=metas)
-                progress.iters_done_report(len(names))
-                sly.fs.clean_dir(frames_dir)
+                    app_logger.info(f"Downloading {len(frame_indexes)} frames: {progress.current}/{cnt_extracted_frames}")
+                    imgs.extend(api.video.frame.download_nps(info.id, frame_indexes))
+                app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
+                api.image.upload_nps(res_dataset.id, names, imgs, progress.iters_done_report, metas)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
     w.workflow_output(api, res_project.id)
