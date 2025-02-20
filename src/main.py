@@ -67,8 +67,8 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 names = [f"{info.id}_frame_{frame_index:06d}.jpg" for frame_index in batch_indices]
 
                 app_logger.info(f"Downloading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
-                imgs = api.video.frame.download_nps(dataset.id, info.id, batch_indices)
-                
+                imgs = api.video.frame.download_nps(info.id, batch_indices)
+
                 app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
                 api.image.upload_nps(res_dataset.id, names, imgs, progress.iters_done_report, metas)
 
