@@ -3,22 +3,12 @@ import supervisely_lib as sly
 import workflow as w
 import cv2
 
-if sly.is_development():
-    from dotenv import load_dotenv
-    load_dotenv("debug.env")
-    load_dotenv(os.path.expanduser("~/supervisely.env"))
-    TEAM_ID = int(os.environ['modal.state.teamId'])
-    WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
-    PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
-    DATASET_ID = os.environ.get('modal.state.slyDatasetId', None)
-    if DATASET_ID is not None:
-        DATASET_ID = int(DATASET_ID)
-else:
-    TEAM_ID = sly.env.team_id()
-    WORKSPACE_ID = sly.env.workspace_id()
-    PROJECT_ID = sly.env.project_id()
-    DATASET_ID = sly.env.dataset_id(False)
-
+TEAM_ID = int(os.environ['modal.state.teamId'])
+WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
+PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
+DATASET_ID = os.environ.get('modal.state.slyDatasetId', None)
+if DATASET_ID is not None:
+    DATASET_ID = int(DATASET_ID)
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
 DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
 RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
@@ -55,8 +45,6 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                                      type=sly.ProjectType.IMAGES,
                                      description=project.description,
                                      change_name_if_conflict=True)
-    temp_dir = "./sly_app_data/"
-    os.makedirs(temp_dir, exist_ok=True)
     for dataset in datasets:
         res_dataset = None
         if DATASETS_STRUCTURE == "keep original":
@@ -66,7 +54,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             if DATASETS_STRUCTURE == "create dataset for every video":
                 res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
 
-            video_path = temp_dir + info.name
+            video_path = my_app.data_dir + info.name
             api.video.download_path(info.id, video_path)
 
             shared_meta = {
@@ -88,7 +76,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
 
                 app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
                 api.image.upload_nps(res_dataset.id, names, frames, progress.iters_done_report, metas)
-            sly.fs.clean_dir(temp_dir)
+            sly.fs.clean_dir(my_app.data_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
     w.workflow_output(api, res_project.id)
