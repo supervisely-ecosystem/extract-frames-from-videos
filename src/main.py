@@ -23,10 +23,12 @@ def frame_batches_generator(video_path, frame_count, step, batch_size):
         ret, frame = cap.read()
         if not ret:
             break
-        batch.append((frame_index, frame))
+        batch.append((frame_index, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
         if len(batch) == batch_size:
             yield batch
             batch = []
+    if batch:
+        yield batch
     cap.release()
 
 @my_app.callback("extract_frames")
@@ -73,7 +75,7 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             progress = sly.Progress(info.name, cnt_extracted_frames)
             for batch in frame_batches_generator(video_path, info.frames_count, FRAMES_STEP, 10):
                 indices = [frame_index for frame_index, _ in batch]
-                frames = [cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) for _, frame in batch]
+                frames = [frame for _, frame in batch]
 
                 metas = [{**shared_meta, "frame": index} for index in indices]
                 names = [f"{info.id}_frame_{index:06d}.jpg" for index in indices]
