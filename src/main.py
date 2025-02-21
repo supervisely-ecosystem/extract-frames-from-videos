@@ -55,7 +55,10 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
 
             video_path = my_app.data_dir + info.name
-            api.video.download_path(info.id, video_path)
+
+            app_logger.info(f"Downloading video: {info.name}")
+            download_progress = sly.Progress(f"Downloading video: {info.name}", 1)
+            api.video.download_path(info.id, video_path, download_progress.iter_done_report)
 
             shared_meta = {
                 "original_project_id": project.id,
