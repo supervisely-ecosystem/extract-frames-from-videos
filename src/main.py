@@ -3,10 +3,10 @@ import supervisely_lib as sly
 import workflow as w
 import cv2
 
-TEAM_ID = int(os.environ['modal.state.teamId'])
-WORKSPACE_ID = int(os.environ['modal.state.workspaceId'])
-PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
-DATASET_ID = os.environ.get('modal.state.slyDatasetId', None)
+TEAM_ID = int(os.environ['context.teamId'])
+WORKSPACE_ID = int(os.environ['context.workspaceId'])
+PROJECT_ID = int(os.environ["modal.state.slyProjectId"])
+DATASET_ID = os.environ.get("modal.state.slyDatasetId", None)
 if DATASET_ID is not None:
     DATASET_ID = int(DATASET_ID)
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
