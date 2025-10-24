@@ -1,5 +1,6 @@
 import os
-import supervisely_lib as sly
+from dotenv import load_dotenv
+import supervisely as sly
 import workflow as w
 import cv2
 
@@ -12,6 +13,10 @@ if DATASET_ID is not None:
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
 DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
 RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
+
+if sly.is_development():
+    load_dotenv("local.env")
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 my_app = sly.AppService()
 
