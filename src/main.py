@@ -2,6 +2,7 @@ import os
 import supervisely_lib as sly
 import workflow as w
 import cv2
+from supervisely import handle_exceptions
 
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
@@ -12,8 +13,8 @@ if DATASET_ID is not None:
 FRAMES_STEP = int(os.environ["modal.state.framesStep"])
 DATASETS_STRUCTURE = os.environ["modal.state.datasetsStructure"]
 RESULT_PROJECT_NAME = os.environ["modal.state.projectName"]
-
-my_app = sly.AppService()
+TASK_ID = int(os.environ['TASK_ID'])
+DATA_DIR = sly.app.get_data_dir()
 
 def frame_batches_generator(video_path, frame_count, step, batch_size):
     cap = cv2.VideoCapture(video_path)
@@ -31,9 +32,9 @@ def frame_batches_generator(video_path, frame_count, step, batch_size):
         yield batch
     cap.release()
 
-@my_app.callback("extract_frames")
 @sly.timeit
-def extract_frames(api: sly.Api, task_id, context, state, app_logger):
+@handle_exceptions(has_ui=False)
+def extract_frames(api: sly.Api, task_id):
     project = api.project.get_info_by_id(PROJECT_ID)
     if DATASET_ID is None:
         datasets = api.dataset.get_list(project.id)
@@ -56,9 +57,9 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
             if DATASETS_STRUCTURE == "create dataset for every video":
                 res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
 
-            video_path = my_app.data_dir + info.name
+            video_path = DATA_DIR + info.name
 
-            app_logger.info(f"Downloading video: {info.name}")
+            sly.logger.info(f"Downloading video: {info.name}")
             download_progress = sly.Progress(f"Downloading video: {info.name}", 1)
             api.video.download_path(info.id, video_path)
             download_progress.iter_done_report()
@@ -80,13 +81,11 @@ def extract_frames(api: sly.Api, task_id, context, state, app_logger):
                 metas = [{**shared_meta, "frame": index} for index in indices]
                 names = [f"{info.id}_frame_{index:06d}.jpg" for index in indices]
 
-                app_logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
+                sly.logger.info(f"Uploading {len(names)} frames: {progress.current}/{cnt_extracted_frames}")
                 api.image.upload_nps(res_dataset.id, names, frames, progress.iters_done_report, metas)
-            sly.fs.clean_dir(my_app.data_dir)
 
     api.task.set_output_project(task_id, res_project.id, res_project.name)
     w.workflow_output(api, res_project.id)
-    my_app.stop()
 
 
 def main():
@@ -96,7 +95,7 @@ def main():
         "PROJECT_ID": PROJECT_ID,
         "DATASET_ID": DATASET_ID
     })
-    my_app.run(initial_events=[{"command": "extract_frames"}])
+    extract_frames(sly.api, TASK_ID)
 
 
 if __name__ == "__main__":
