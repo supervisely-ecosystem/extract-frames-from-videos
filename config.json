@@ -9,7 +9,7 @@
   ],
   "description": "Read every n-th frame and save to images project",
   "docker_image": "supervisely/data-operations:6.73.564",
-  "instance_version": "6.15.35",
+  "instance_version": "6.15.60",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
