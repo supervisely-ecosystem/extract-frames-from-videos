@@ -8,8 +8,8 @@
     "data operations"
   ],
   "description": "Read every n-th frame and save to images project",
-  "docker_image": "supervisely/data-operations:6.73.486",
-  "instance_version": "6.15.35",
+  "docker_image": "supervisely/data-operations:6.74.34",
+  "instance_version": "6.17.22",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
