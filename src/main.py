@@ -38,15 +38,34 @@ def frame_batches_generator(video_path, frame_count, step, batch_size):
         yield batch
     cap.release()
 
+def selected_datasets(all_datasets, dataset_id=None):
+    """The datasets to process, parents before children: the whole project tree, or the
+    selected dataset and all datasets nested in it."""
+    children = {}
+    for dataset in all_datasets:
+        children.setdefault(dataset.parent_id, []).append(dataset)
+    if dataset_id is None:
+        roots = children.get(None, [])
+    else:
+        roots = [dataset for dataset in all_datasets if dataset.id == dataset_id]
+        if not roots:
+            raise ValueError(f"Dataset {dataset_id} is not in project {PROJECT_ID}")
+    ordered, stack = [], list(reversed(roots))
+    while stack:
+        dataset = stack.pop()
+        ordered.append(dataset)
+        stack.extend(reversed(children.get(dataset.id, [])))
+    return ordered
+
+
 @sly.timeit
 @handle_exceptions(has_ui=False)
 def extract_frames(task_id):
     project = api.project.get_info_by_id(PROJECT_ID)
+    datasets = selected_datasets(api.dataset.get_list(project.id, recursive=True), DATASET_ID)
     if DATASET_ID is None:
-        datasets = api.dataset.get_list(project.id)
         w.workflow_input(api, project.id, "project")
     else:
-        datasets = [api.dataset.get_info_by_id(DATASET_ID)]
         w.workflow_input(api, DATASET_ID, "dataset")
 
     res_project = api.project.create(WORKSPACE_ID,
@@ -54,10 +73,19 @@ def extract_frames(task_id):
                                      type=sly.ProjectType.IMAGES,
                                      description=project.description,
                                      change_name_if_conflict=True)
+    res_datasets = {}  # source dataset id -> result dataset (keep original)
     for dataset in datasets:
         res_dataset = None
         if DATASETS_STRUCTURE == "keep original":
-            res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
+            parent = res_datasets.get(dataset.parent_id)
+            res_dataset = api.dataset.create(
+                res_project.id,
+                dataset.name,
+                dataset.description,
+                change_name_if_conflict=True,
+                parent_id=parent.id if parent is not None else None,
+            )
+            res_datasets[dataset.id] = res_dataset
         videos_info = api.video.get_list(dataset.id)
         for info in videos_info:
             if DATASETS_STRUCTURE == "create dataset for every video":
