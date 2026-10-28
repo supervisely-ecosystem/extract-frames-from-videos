@@ -2,4 +2,6 @@
 .idea
 *.mp4
 venv
-supervisely_lib
+supervisely_lib.pytest_cache/
+.ruff_cache/
+__pycache__/
