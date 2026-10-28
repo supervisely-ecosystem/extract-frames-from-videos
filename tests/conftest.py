@@ -1,8 +1,9 @@
 """Offline test harness for extract-frames-from-videos.
 
 src/main.py is imported with the task context in env vars and sly.Api.from_env replaced by an
-in-memory fake (no Supervisely server). Videos are real files written with OpenCV whose frames
-carry their own index (black/white stripes), so the tests can check which frame was stored under which index.
+in-memory fake (no Supervisely server). Videos are real files written with OpenCV whose
+frames carry their own index (black/white stripes), so the tests can check which frame was
+stored under which index.
 
 App code is imported from ../src, or from $APP_SRC (run the same tests against another checkout).
 

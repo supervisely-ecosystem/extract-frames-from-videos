@@ -94,7 +94,8 @@ def extract_frames(task_id):
             if DATASETS_STRUCTURE == "create dataset for every video":
                 res_dataset = api.dataset.create(res_project.id, f"{info.id}_{info.name}")
 
-            video_path = os.path.join(DATA_DIR, info.name)
+            # local name from the id: video names are user data and must not pick the path
+            video_path = os.path.join(DATA_DIR, f"{info.id}{sly.fs.get_file_ext(info.name)}")
 
             sly.logger.info(f"Downloading video: {info.name}")
             download_progress = sly.Progress(f"Downloading video: {info.name}", 1)

@@ -1,5 +1,7 @@
 """Runs that extracted nothing, or not everything, must not be reported as a success."""
 
+import os
+
 from conftest import FakeApi
 
 
@@ -29,3 +31,15 @@ def test_invalid_step_fails_before_creating_anything(run_app, video):
     error = run_app(api, step=0)
     assert error is not None and "step" in str(error).lower()
     assert api.created_projects == {}
+
+
+def test_video_name_cannot_place_the_download_outside_the_data_dir(run_app, video, tmp_path):
+    seen = []
+    api = FakeApi((1, "videos"), [(10, 1, None, "A")], {10: [(100, "../../evil.mp4", 5, video(5))]})
+    download = api.video.download_path
+    api.video.download_path = lambda id, path: (seen.append(path), download(id, path))
+    assert run_app(api, step=5) is None
+    data_dir = os.path.realpath(tmp_path / "data")
+    assert seen and all(
+        os.path.commonpath([os.path.realpath(p), data_dir]) == data_dir for p in seen
+    )
